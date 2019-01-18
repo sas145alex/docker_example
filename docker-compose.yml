@@ -1,0 +1,62 @@
+version: '3'
+
+services:
+
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/usr/src/app
+      - gem_cache:/gems
+    env_file:
+      - .env/development/database
+      - .env/development/web
+
+  redis:
+    image: redis
+
+  database:
+    image: postgres
+    env_file:
+      - .env/development/database
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  sidekiq:
+    build: .
+    command: bundle exec sidekiq
+    volumes:
+      - .:/usr/src/app
+    depends_on:
+      - redis
+      - database
+    env_file:
+      - .env/development/database
+      - .env/development/web
+
+
+  # webpack_dev_server:
+  #   build: .
+  #   command: ./bin/webpack-dev-server
+  #   ports:
+  #     - 3035:3035
+  #   volumes:
+  #     - .:/usr/src/app
+  #     - gem_cache:/gems
+  #   env_file:
+  #     - .env/development/web
+  #     - .env/development/database
+  #   environment:
+  #     - WEBPACKER_DEV_SERVER_HOST=0.0.0.0
+
+  # selenium_chrome:
+  #   image: selenium/standalone-chrome-debug
+  #   logging:
+  #     driver: none
+  #   ports:
+  #     - "5900:5900"
+
+volumes:
+  db_data:
+  gem_cache:
