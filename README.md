@@ -1,24 +1,14 @@
-# README
+# Example rails app on docker's containers
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+Project includes:
+* Web-application
+* Postgres
+* Redis
+* Sidekiq
+* Webpack (React)
 
-Things you may want to cover:
-
-* Ruby version
-
-* System dependencies
-
-* Configuration
-
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+# How to set up
+Just install docker and run:
+```bash
+docker-compose up -d
+```
