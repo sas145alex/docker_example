@@ -1,0 +1,46 @@
+version: '3'
+
+services:
+
+  web:
+    # build: .
+    environment:
+    - BUNDLE_PATH=/gems
+    image: myhealth_build
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - gem_cache:/gems
+      # - ssh_keys:/root/.ssh/
+    env_file:
+      - .env/development/database
+      - .env/development/web
+
+  redis:
+    image: redis
+
+  database:
+    image: postgres
+    env_file:
+      - .env/development/database
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  sidekiq:
+    # build: .
+    image: myhealth_build
+    command: bundle exec sidekiq
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - database
+    env_file:
+      - .env/development/database
+      - .env/development/web
+
+volumes:
+  db_data:
+  gem_cache:
+  # ssh_keys:
