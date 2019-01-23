@@ -17,3 +17,6 @@ docker-compose up -d
 
 # How I setup sidekiq configuration
 https://github.com/jbussdieker/tutorial-docker-compose-rails-sidekiq/blob/master/TUTORIAL.md
+
+# SSH-keys on building stage 
+in files with prefix 'ssh-on-building'
