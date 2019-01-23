@@ -1,0 +1,72 @@
+### First temporary image ###
+## bundle install and remove ssh keys
+FROM ruby:2.5.1 as temporary_with_keys
+
+LABEL maintainer="sas145alex@gmail.com"
+
+ARG SSH_KEY
+ARG SSH_KEY_PASSPHRASE=''
+
+# install gem without dockementation
+RUN echo 'gem: --no-document' >> /etc/gemrc
+
+# copy gemfile in separate step for caching gem's change
+COPY Gemfile* /app/
+
+ENV BUNDLE_PATH /gems
+
+# for next bundle install
+WORKDIR /app
+
+# copy ssh key from local machine
+RUN mkdir -p /root/.ssh && \
+    chmod 0700 /root/.ssh && \
+    ssh-keyscan gitlab.mhth.ru > /root/.ssh/known_hosts && \
+    echo "${SSH_KEY}" > /root/.ssh/id_ed25519 && \
+    chmod 600 /root/.ssh/id_ed25519 && \
+    # bundle install and remove ssh keys from container
+    eval `ssh-agent -s` && \
+    printf "${SSH_KEY_PASSPHRASE}\n" | ssh-add /root/.ssh/id_ed25519 && \
+    bundle install && \
+    rm -rf /root/.ssh/
+
+
+
+### Last resulting image ###
+## copy all non-sensitive data from previus images
+## install packages
+FROM ruby:2.5.1
+
+ENV BUNDLE_PATH /gems
+
+# allow apt to work with https-based sources
+RUN apt-get update -yqq && apt-get install -yqq --no-install-recommends \
+apt-transport-https
+
+# ensure we install an up-to-date version of Node
+# maybe that only for yarn
+# See https://github.com/yarnpkg/yarn/issues/2888
+RUN curl -sL https://deb.nodesource.com/setup_8.x | bash -
+
+# install packages
+RUN apt-get update -yqq && apt-get install -yqq --no-install-recommends \
+nodejs
+
+# install gem without dockementation
+RUN echo 'gem: --no-document' >> /etc/gemrc
+
+COPY --from=temporary_with_keys /gems /gems
+
+WORKDIR /app
+
+# copy all files from current local diцrectory to directory in container
+COPY . /app/
+
+# default command running when container starts (docker run)
+CMD ["bin/rails", "s", "-b", "0.0.0.0"]
+# CMD ["bundle", "exec", "rails", "s", "-b", "0.0.0.0"]
+
+
+
+### build command
+# docker build --no-cache -t myhealth_build --build-arg SSH_KEY="$(cat ~/.ssh/ssh_docker_building)" --build-arg SSH_KEY_PASSPHRASE="$(cat ~/.ssh/ssh_docker_building_passphrase.txt)" .
